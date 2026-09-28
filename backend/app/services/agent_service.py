@@ -108,7 +108,20 @@ class AgentService:
             logger.info(f"Generated YouTube Title: '{title}'")
             logger.info(f"Generated Tags ({len(tags)}): {tags}")
 
-            # 9. Upload to YouTube
+            # 9. Generate AI Thumbnail via Gemini Imagen (if enabled)
+            thumbnail_path = None
+            if getattr(settings, "generate_thumbnail", True):
+                try:
+                    logger.info("Generating AI thumbnail with Gemini Imagen...")
+                    thumbnail_path = self.ai_service.generate_thumbnail(
+                        title=title,
+                        file_name=video.file_name,
+                        video_id=video.drive_file_id,
+                    )
+                except Exception as e:
+                    logger.warning(f"AI thumbnail generation failed/skipped: {e}")
+
+            # 10. Upload to YouTube
             upload_record = self.upload_service.process_upload_with_retry(
                 video=video,
                 file_path=local_file_path,
@@ -118,6 +131,7 @@ class AgentService:
                 category_id=settings.category_id,
                 privacy_status=settings.privacy_status,
                 max_retries=settings.max_retries,
+                thumbnail_path=thumbnail_path,
             )
 
             # 10. Clean up temporary local file

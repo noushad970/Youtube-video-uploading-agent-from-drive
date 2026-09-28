@@ -113,6 +113,21 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </button>
         </div>
 
+        {folders.length === 0 && (
+          <div className="p-3.5 rounded-xl bg-slate-900/90 border border-amber-500/30 text-xs text-amber-300 flex items-center justify-between">
+            <span>
+              <strong>No Drive folders found:</strong> Make sure your Google Account is connected with Google Drive permissions.
+            </span>
+            <button
+              type="button"
+              onClick={onRefreshFolders}
+              className="ml-3 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-medium transition"
+            >
+              Fetch / Refresh
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-semibold text-slate-400 block mb-1.5">Select Drive Folder</label>
@@ -229,49 +244,143 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
       </div>
 
-      {/* 3. Ollama AI Metadata Configuration */}
+      {/* 3. AI Metadata Engine Configuration */}
       <div className="glass-panel rounded-2xl p-6 border border-slate-800 space-y-6">
-        <div className="flex items-center space-x-2">
-          <Cpu className="h-5 w-5 text-purple-400" />
-          <h2 className="text-base font-bold text-white">Local AI Metadata Generation (Ollama)</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="h-5 w-5 text-purple-400" />
+            <h2 className="text-base font-bold text-white">AI Content Generation (Gemini / Ollama)</h2>
+          </div>
+          <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">
+            Title • Description • Tags • Thumbnail
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="text-xs font-semibold text-slate-400 block mb-1.5">Ollama Model Name</label>
-            <input
-              type="text"
-              value={formData.ollama_model ?? "qwen3:8b"}
-              onChange={(e) => setFormData({ ...formData, ollama_model: e.target.value })}
-              placeholder="e.g. qwen3:8b, llama3.2, mistral"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-red-500 font-mono"
-            />
+        {/* Provider Selection */}
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-2">Select Primary AI Provider</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, ai_provider: "gemini" })}
+              className={`p-4 rounded-xl border text-left transition flex items-start space-x-3 ${
+                (formData.ai_provider ?? "gemini") === "gemini"
+                  ? "bg-purple-950/40 border-purple-500/60 shadow-lg shadow-purple-950/40 text-white"
+                  : "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700"
+              }`}
+            >
+              <Sparkles className={`h-5 w-5 mt-0.5 shrink-0 ${
+                (formData.ai_provider ?? "gemini") === "gemini" ? "text-purple-400" : "text-slate-500"
+              }`} />
+              <div>
+                <div className="text-sm font-bold flex items-center gap-2">
+                  Google Gemini (Cloud AI)
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold uppercase">
+                    Recommended
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Fast, ultra-smart metadata & Imagen 3 thumbnails. No local GPU required.
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, ai_provider: "ollama" })}
+              className={`p-4 rounded-xl border text-left transition flex items-start space-x-3 ${
+                formData.ai_provider === "ollama"
+                  ? "bg-purple-950/40 border-purple-500/60 shadow-lg shadow-purple-950/40 text-white"
+                  : "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700"
+              }`}
+            >
+              <Cpu className={`h-5 w-5 mt-0.5 shrink-0 ${
+                formData.ai_provider === "ollama" ? "text-purple-400" : "text-slate-500"
+              }`} />
+              <div>
+                <div className="text-sm font-bold">Ollama (Local LLM)</div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Runs local models (e.g. Qwen, Llama) on your machine.
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Gemini Settings */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+          <div className="flex items-center space-x-2 text-sm font-semibold text-slate-200">
+            <Sparkles className="h-4 w-4 text-amber-400" />
+            <span>Google Gemini Settings</span>
           </div>
 
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-slate-200">Fallback if AI Unavailable</div>
-              <p className="text-xs text-slate-400">Use filename & default template if Ollama is down</p>
+              <label className="text-xs font-semibold text-slate-400 block mb-1.5">Google Gemini API Key</label>
+              <input
+                type="password"
+                value={formData.gemini_api_key ?? ""}
+                onChange={(e) => setFormData({ ...formData, gemini_api_key: e.target.value })}
+                placeholder="AIzaSy..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">Free key available at <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" className="text-amber-400 hover:underline">aistudio.google.com</a></p>
             </div>
-            <input
-              type="checkbox"
-              checked={formData.fallback_if_ai_unavailable ?? true}
-              onChange={(e) => setFormData({ ...formData, fallback_if_ai_unavailable: e.target.checked })}
-              className="h-5 w-5 rounded border-slate-700 text-red-600 focus:ring-red-500 accent-red-600"
-            />
+
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1.5">Gemini Text Model</label>
+              <select
+                value={formData.gemini_model ?? "gemini-2.5-flash-lite"}
+                onChange={(e) => setFormData({ ...formData, gemini_model: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+              >
+                <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (Default - Ultra Fast & Efficient)</option>
+                <option value="gemini-2.5-flash">gemini-2.5-flash (High Performance)</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro (Advanced Reasoning)</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* AI Features Toggles */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        {/* Local Ollama Settings (Optional fallback / alternative) */}
+        {(formData.ai_provider === "ollama" || !formData.gemini_api_key) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1.5">Local Ollama Model Name</label>
+              <input
+                type="text"
+                value={formData.ollama_model ?? "qwen3:8b"}
+                onChange={(e) => setFormData({ ...formData, ollama_model: e.target.value })}
+                placeholder="e.g. qwen3:8b, llama3.2"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-purple-500 font-mono"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div>
+                <div className="text-sm font-medium text-slate-200">Fallback if AI Unavailable</div>
+                <p className="text-xs text-slate-400">Use formatted title if offline</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.fallback_if_ai_unavailable ?? true}
+                onChange={(e) => setFormData({ ...formData, fallback_if_ai_unavailable: e.target.checked })}
+                className="h-5 w-5 rounded border-slate-700 text-red-600 focus:ring-red-500 accent-red-600"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Feature Toggles */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
           <label className="flex items-center space-x-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700 transition">
             <input
               type="checkbox"
               checked={formData.generate_title ?? true}
               onChange={(e) => setFormData({ ...formData, generate_title: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-700 text-red-600 focus:ring-red-500 accent-red-600"
+              className="h-4 w-4 rounded border-slate-700 text-purple-600 focus:ring-purple-500 accent-purple-600"
             />
-            <span className="text-sm font-medium text-slate-200">Generate Title</span>
+            <span className="text-xs font-semibold text-slate-200">Generate Title</span>
           </label>
 
           <label className="flex items-center space-x-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700 transition">
@@ -279,9 +388,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               type="checkbox"
               checked={formData.generate_description ?? true}
               onChange={(e) => setFormData({ ...formData, generate_description: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-700 text-red-600 focus:ring-red-500 accent-red-600"
+              className="h-4 w-4 rounded border-slate-700 text-purple-600 focus:ring-purple-500 accent-purple-600"
             />
-            <span className="text-sm font-medium text-slate-200">Generate Description</span>
+            <span className="text-xs font-semibold text-slate-200">Generate Description</span>
           </label>
 
           <label className="flex items-center space-x-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700 transition">
@@ -289,9 +398,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               type="checkbox"
               checked={formData.generate_tags ?? true}
               onChange={(e) => setFormData({ ...formData, generate_tags: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-700 text-red-600 focus:ring-red-500 accent-red-600"
+              className="h-4 w-4 rounded border-slate-700 text-purple-600 focus:ring-purple-500 accent-purple-600"
             />
-            <span className="text-sm font-medium text-slate-200">Generate Tags</span>
+            <span className="text-xs font-semibold text-slate-200">Generate Tags</span>
+          </label>
+
+          <label className="flex items-center space-x-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700 transition">
+            <input
+              type="checkbox"
+              checked={formData.generate_thumbnail ?? true}
+              onChange={(e) => setFormData({ ...formData, generate_thumbnail: e.target.checked })}
+              className="h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400 accent-amber-500"
+            />
+            <span className="text-xs font-semibold text-slate-200">Generate Thumbnail</span>
           </label>
         </div>
       </div>

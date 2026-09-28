@@ -43,7 +43,10 @@ export const App: React.FC = () => {
 
   const showToast = (type: "success" | "error" | "info", message: string) => {
     setToast({ type, message });
-    setTimeout(() => setToast(null), 5000);
+    const duration = type === "error" ? 8000 : 5000;
+    setTimeout(() => {
+      setToast((current) => (current?.message === message ? null : current));
+    }, duration);
   };
 
   // Fetch Core Status
@@ -279,25 +282,38 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Toast Notification */}
+      {/* Center-Bottom Notice / Error Debug Popup */}
       {toast && (
-        <div className="fixed top-20 right-6 z-50 animate-fadeIn">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] w-full max-w-lg px-4 pointer-events-auto">
           <div
-            className={`flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-2xl border text-sm font-medium ${
+            className={`flex items-start justify-between space-x-3 px-5 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl text-sm font-medium transition-all duration-300 ${
               toast.type === "success"
-                ? "bg-emerald-950/90 text-emerald-300 border-emerald-500/40"
+                ? "bg-emerald-950/95 text-emerald-200 border-emerald-500/60 shadow-emerald-950/60 glow-emerald"
                 : toast.type === "error"
-                ? "bg-rose-950/90 text-rose-300 border-rose-500/40"
-                : "bg-slate-900/95 text-slate-200 border-slate-700"
+                ? "bg-rose-950/95 text-rose-200 border-rose-500/60 shadow-rose-950/60 glow-red"
+                : "bg-slate-900/95 text-slate-100 border-slate-700 shadow-slate-950/60 glow-blue"
             }`}
           >
-            {toast.type === "success" ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
-            )}
-            <span>{toast.message}</span>
-            <button onClick={() => setToast(null)} className="p-1 hover:opacity-75">
+            <div className="flex items-start space-x-3 overflow-hidden flex-1">
+              {toast.type === "success" ? (
+                <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+              ) : toast.type === "error" ? (
+                <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 text-sm leading-snug break-words">
+                <span className="font-semibold block text-xs tracking-wide uppercase opacity-80 mb-0.5">
+                  {toast.type === "error" ? "Notice / Debug Error" : toast.type === "success" ? "Success" : "Notification"}
+                </span>
+                <span className="text-slate-100 font-normal">{toast.message}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setToast(null)}
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition shrink-0 ml-2"
+              title="Close"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>

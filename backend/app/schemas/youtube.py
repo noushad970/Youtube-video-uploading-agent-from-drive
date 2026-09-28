@@ -49,6 +49,7 @@ class UploadRecordSchema(BaseModel):
     uploaded_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    thumbnail_path: Optional[str] = None
     file_name: Optional[str] = None
     drive_file_id: Optional[str] = None
 

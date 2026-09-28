@@ -42,6 +42,7 @@ class GoogleAuthService:
             client_config=client_config,
             scopes=settings.GOOGLE_SCOPES,
             redirect_uri=settings.GOOGLE_REDIRECT_URI,
+            autogenerate_code_verifier=False,
         )
         auth_url, _ = flow.authorization_url(
             access_type="offline",
@@ -58,6 +59,7 @@ class GoogleAuthService:
             client_config=client_config,
             scopes=settings.GOOGLE_SCOPES,
             redirect_uri=settings.GOOGLE_REDIRECT_URI,
+            autogenerate_code_verifier=False,
         )
         flow.fetch_token(code=code)
         credentials: Credentials = flow.credentials

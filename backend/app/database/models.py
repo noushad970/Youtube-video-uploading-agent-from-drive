@@ -110,6 +110,7 @@ class Upload(Base):
         index=True,
         nullable=False,
     )  # pending, uploading, uploaded, failed
+    thumbnail_path = Column(String(1024), nullable=True)
     retry_count = Column(Integer, default=0, nullable=False)
     error_message = Column(Text, nullable=True)
     uploaded_at = Column(DateTime, nullable=True)
@@ -131,6 +132,11 @@ class AgentSettings(Base):
     generate_title = Column(Boolean, default=True, nullable=False)
     generate_description = Column(Boolean, default=True, nullable=False)
     generate_tags = Column(Boolean, default=True, nullable=False)
+    generate_thumbnail = Column(Boolean, default=True, nullable=False)
+    ai_provider = Column(String(64), default="gemini", nullable=False)  # "gemini" or "ollama"
+    gemini_api_key = Column(String(255), nullable=True)
+    gemini_model = Column(String(128), default="gemini-2.5-flash-lite", nullable=False)
+    gemini_image_model = Column(String(128), default="imagen-3.0-generate-002", nullable=False)
     ollama_model = Column(String(128), default="qwen3:8b", nullable=False)
     max_retries = Column(Integer, default=3, nullable=False)
     delete_after_upload = Column(Boolean, default=True, nullable=False)

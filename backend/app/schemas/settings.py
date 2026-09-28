@@ -12,6 +12,11 @@ class AgentSettingsSchema(BaseModel):
     generate_title: bool = True
     generate_description: bool = True
     generate_tags: bool = True
+    generate_thumbnail: bool = True
+    ai_provider: str = "gemini"
+    gemini_api_key: Optional[str] = None
+    gemini_model: str = "gemini-2.5-flash-lite"
+    gemini_image_model: str = "imagen-3.0-generate-002"
     ollama_model: str = "qwen3:8b"
     max_retries: int = Field(default=3, ge=1, le=10)
     delete_after_upload: bool = True
@@ -29,6 +34,11 @@ class AgentSettingsUpdate(BaseModel):
     generate_title: Optional[bool] = None
     generate_description: Optional[bool] = None
     generate_tags: Optional[bool] = None
+    generate_thumbnail: Optional[bool] = None
+    ai_provider: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+    gemini_model: Optional[str] = None
+    gemini_image_model: Optional[str] = None
     ollama_model: Optional[str] = None
     max_retries: Optional[int] = Field(default=None, ge=1, le=10)
     delete_after_upload: Optional[bool] = None

@@ -57,6 +57,7 @@ export interface UploadRecord {
   uploaded_at?: string | null;
   created_at: string;
   updated_at: string;
+  thumbnail_path?: string | null;
   file_name?: string | null;
   drive_file_id?: string | null;
 }
@@ -75,6 +76,11 @@ export interface AgentSettings {
   generate_title: boolean;
   generate_description: boolean;
   generate_tags: boolean;
+  generate_thumbnail?: boolean;
+  ai_provider?: "gemini" | "ollama";
+  gemini_api_key?: string;
+  gemini_model?: string;
+  gemini_image_model?: string;
   ollama_model: string;
   max_retries: number;
   delete_after_upload: boolean;

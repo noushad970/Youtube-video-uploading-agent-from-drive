@@ -37,6 +37,8 @@ data/logs/*
 
 # Credentials and Secrets
 .env
+**/.env
+*.env
 .env.local
 .env.development.local
 .env.test.local
@@ -47,6 +49,9 @@ token.json
 token.pickle
 *.pem
 *.key
+*.log
+backend/data/
+data/
 
 # Node / Frontend
 node_modules/

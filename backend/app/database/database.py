@@ -27,9 +27,31 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+from sqlalchemy import text
+
+def _migrate_db() -> None:
+    """Safely apply missing column migrations to SQLite."""
+    with engine.connect() as conn:
+        migrations = [
+            ("uploads", "thumbnail_path", "VARCHAR(1024)"),
+            ("agent_settings", "generate_thumbnail", "BOOLEAN DEFAULT 1"),
+            ("agent_settings", "ai_provider", "VARCHAR(64) DEFAULT 'gemini'"),
+            ("agent_settings", "gemini_api_key", "VARCHAR(255)"),
+            ("agent_settings", "gemini_model", "VARCHAR(128) DEFAULT 'gemini-2.5-flash'"),
+            ("agent_settings", "gemini_image_model", "VARCHAR(128) DEFAULT 'imagen-3.0-generate-002'"),
+        ]
+        for table, col, col_type in migrations:
+            try:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}"))
+                conn.commit()
+            except Exception:
+                pass
+
+
 def init_db() -> None:
     """Create all tables and seed initial default settings if empty."""
     Base.metadata.create_all(bind=engine)
+    _migrate_db()
     
     with SessionLocal() as db:
         existing_settings = db.query(AgentSettings).first()
@@ -42,6 +64,11 @@ def init_db() -> None:
                 generate_title=True,
                 generate_description=True,
                 generate_tags=True,
+                generate_thumbnail=settings.GENERATE_THUMBNAIL,
+                ai_provider=settings.AI_PROVIDER,
+                gemini_api_key=settings.GEMINI_API_KEY or None,
+                gemini_model=settings.GEMINI_MODEL,
+                gemini_image_model=settings.GEMINI_IMAGE_MODEL,
                 ollama_model=settings.OLLAMA_MODEL,
                 max_retries=settings.MAX_RETRIES,
                 delete_after_upload=settings.DELETE_AFTER_UPLOAD,

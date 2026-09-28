@@ -46,6 +46,7 @@ def list_uploads(
                 uploaded_at=u.uploaded_at,
                 created_at=u.created_at,
                 updated_at=u.updated_at,
+                thumbnail_path=u.thumbnail_path,
                 file_name=u.video.file_name if u.video else None,
                 drive_file_id=u.video.drive_file_id if u.video else None,
             )

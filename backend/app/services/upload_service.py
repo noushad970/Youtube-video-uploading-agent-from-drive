@@ -26,10 +26,11 @@ class UploadService:
         category_id: str = "20",
         privacy_status: str = "private",
         max_retries: int = 3,
+        thumbnail_path: Optional[str | Path] = None,
     ) -> Upload:
         """
         Execute YouTube upload with safe duplicate prevention, exponential backoff retries,
-        and atomic status tracking.
+        custom AI thumbnail upload, and atomic status tracking.
         """
         # 1. Check if already uploaded
         existing_upload = (
@@ -79,6 +80,11 @@ class UploadService:
                     privacy_status=privacy_status,
                 )
 
+                # 5. Set custom thumbnail if generated
+                if thumbnail_path and Path(thumbnail_path).exists():
+                    logger.info(f"Setting AI generated thumbnail on YouTube video {yt_video_id}...")
+                    self.youtube_service.set_thumbnail(yt_video_id, thumbnail_path)
+
                 # Successful upload state transition
                 self.repo.update_upload(
                     upload_record.id,
@@ -87,6 +93,7 @@ class UploadService:
                     retry_count=attempt - 1,
                     uploaded_at=datetime.now(timezone.utc),
                     error_message=None,
+                    thumbnail_path=str(thumbnail_path) if thumbnail_path else None,
                 )
                 self.repo.update_video(video.id, status="uploaded")
                 logger.info(
