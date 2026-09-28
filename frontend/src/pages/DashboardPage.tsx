@@ -66,7 +66,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </h1>
             <p className="mt-2 text-slate-300 text-sm sm:text-base leading-relaxed">
               Monitoring Google Drive folder <span className="font-semibold text-white">"{status?.selected_folder_name || "None Selected"}"</span>.
-              Randomly selects unuploaded videos, generates AI metadata using local Ollama models, and uploads to YouTube safely.
+              Randomly selects unuploaded videos, generates AI metadata & 16:9 thumbnails using{" "}
+              <span className="text-amber-400 font-medium">
+                {status?.ai_provider === "gemini" ? "Google Gemini AI (2.5 Flash-Lite & Imagen 3)" : "Ollama AI"}
+              </span>
+              , and uploads to YouTube safely.
             </p>
           </div>
 
@@ -189,18 +193,35 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               <StatusBadge status={status?.youtube_connected ? "connected" : "disconnected"} />
             </div>
 
-            {/* Ollama AI */}
+            {/* AI Provider */}
             <div className="glass-card rounded-xl p-4 flex items-start justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400">
+                <div
+                  className={`p-2.5 rounded-lg ${
+                    status?.ai_provider === "gemini" ? "bg-amber-500/10 text-amber-400" : "bg-purple-500/10 text-purple-400"
+                  }`}
+                >
                   <Cpu className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white">Local Ollama LLM</h4>
-                  <p className="text-xs text-slate-400">Metadata generation</p>
+                  <h4 className="text-sm font-semibold text-white">
+                    {status?.ai_provider === "gemini" ? "Google Gemini AI" : "Local Ollama LLM"}
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    {status?.ai_provider === "gemini"
+                      ? "Gemini 2.5 Flash-Lite & Imagen 3"
+                      : "Metadata generation"}
+                  </p>
                 </div>
               </div>
-              <StatusBadge status={status?.ollama_connected ? "connected" : "disconnected"} />
+              <StatusBadge
+                status={
+                  status?.ai_connected ||
+                  (status?.ai_provider === "gemini" ? status?.gemini_ready : status?.ollama_connected)
+                    ? "connected"
+                    : "disconnected"
+                }
+              />
             </div>
           </div>
         </div>

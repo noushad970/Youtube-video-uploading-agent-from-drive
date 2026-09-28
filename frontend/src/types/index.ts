@@ -96,6 +96,9 @@ export interface AgentStatus {
   youtube_connected: boolean;
   drive_connected: boolean;
   ollama_connected: boolean;
+  gemini_ready?: boolean;
+  ai_connected?: boolean;
+  ai_provider?: "gemini" | "ollama" | string;
   selected_folder_name?: string | null;
   selected_folder_id?: string | null;
   total_videos: number;

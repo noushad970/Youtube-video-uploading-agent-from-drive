@@ -11,6 +11,9 @@ class AgentStatusResponse(BaseModel):
     youtube_connected: bool
     drive_connected: bool
     ollama_connected: bool
+    gemini_ready: bool = False
+    ai_connected: bool = True
+    ai_provider: str = "gemini"
     selected_folder_name: Optional[str] = None
     selected_folder_id: Optional[str] = None
     total_videos: int = 0

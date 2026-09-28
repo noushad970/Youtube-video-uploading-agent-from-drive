@@ -34,21 +34,29 @@ def get_agent_status(db: Session = Depends(get_db)):
     _, latest_uploads = repo.list_uploads(status="uploaded", limit=1)
     last_upload_at = latest_uploads[0].uploaded_at if latest_uploads else None
 
+    ollama_ok = ai_health.get("ollama_connected", False) or ai_health.get("connected", False)
+    gemini_ok = ai_health.get("gemini_ready", False)
+    active_provider = getattr(settings, "ai_provider", "gemini")
+    ai_connected = gemini_ok if active_provider == "gemini" else ollama_ok
+
     return AgentStatusResponse(
         is_running=settings.enabled,
-        is_scheduler_running=scheduler_status["scheduler_running"],
-        is_job_active=scheduler_status["is_job_currently_executing"],
+        is_scheduler_running=scheduler_status.get("scheduler_running", False),
+        is_job_active=scheduler_status.get("is_job_currently_executing", False),
         google_connected=auth_status["is_authenticated"],
         youtube_connected=auth_status["has_youtube_scope"],
         drive_connected=selected_folder is not None and auth_status["has_drive_scope"],
-        ollama_connected=ai_health["connected"],
+        ollama_connected=ollama_ok,
+        gemini_ready=gemini_ok,
+        ai_connected=ai_connected,
+        ai_provider=active_provider,
         selected_folder_name=folder_name,
         selected_folder_id=folder_id,
-        total_videos=stats["total"],
-        uploaded_videos=stats["uploaded"],
-        remaining_videos=stats["remaining"],
+        total_videos=stats.get("total", 0),
+        uploaded_videos=stats.get("uploaded", 0),
+        remaining_videos=stats.get("remaining", 0),
         last_upload_at=last_upload_at,
-        next_scheduled_run=scheduler_status["next_scheduled_run"],
+        next_scheduled_run=scheduler_status.get("next_scheduled_run"),
         last_run_status=latest_run.status if latest_run else None,
         last_run_error=latest_run.error_message if latest_run else None,
     )

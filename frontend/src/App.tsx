@@ -52,12 +52,16 @@ export const App: React.FC = () => {
   // Fetch Core Status
   const fetchStatusAndAuth = useCallback(async () => {
     try {
-      const [statusRes, authRes] = await Promise.all([
+      const [statusRes, authRes] = await Promise.allSettled([
         apiClient.getAgentStatus(),
         apiClient.getAuthStatus(),
       ]);
-      setStatus(statusRes);
-      setAuth(authRes);
+      if (statusRes.status === "fulfilled") {
+        setStatus(statusRes.value);
+      }
+      if (authRes.status === "fulfilled") {
+        setAuth(authRes.value);
+      }
     } catch (e) {
       console.error("Status check failed", e);
     }
@@ -97,12 +101,16 @@ export const App: React.FC = () => {
   // Fetch Settings & Folders
   const fetchSettingsAndFolders = useCallback(async () => {
     try {
-      const [settingsRes, foldersRes] = await Promise.all([
+      const [settingsRes, foldersRes] = await Promise.allSettled([
         apiClient.getSettings(),
-        apiClient.getDriveFolders().catch(() => [] as DriveFolder[]),
+        apiClient.getDriveFolders(),
       ]);
-      setSettings(settingsRes);
-      setFolders(foldersRes);
+      if (settingsRes.status === "fulfilled") {
+        setSettings(settingsRes.value);
+      }
+      if (foldersRes.status === "fulfilled") {
+        setFolders(foldersRes.value);
+      }
     } catch (e) {
       console.error("Settings load failed", e);
     }
