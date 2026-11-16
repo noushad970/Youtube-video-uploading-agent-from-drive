@@ -1,0 +1,11 @@
+{
+  "name": "youtube-ai-agent-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "YouTube AI Upload Agent workspace root",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview"
+  }
+}
