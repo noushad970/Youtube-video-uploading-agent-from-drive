@@ -11,6 +11,7 @@ from app.services.video_service import VideoService
 from app.services.ai_service import AIService
 from app.services.youtube_service import YouTubeService
 from app.services.upload_service import UploadService
+from app.services.debug_service import update_agent_pipeline_state
 from app.utils.video_utils import extract_video_metadata
 
 
@@ -33,30 +34,66 @@ class AgentService:
         3. Synchronize catalog & select random unuploaded video
         4. Download video
         5. Extract metadata & generate AI title, description, tags
-        6. Upload to YouTube as private/configured status
-        7. Record upload & mark as uploaded
-        8. Clean up temporary files
+        6. Generate AI thumbnail (Imagen 3)
+        7. Upload to YouTube as private/configured status
+        8. Set custom thumbnail & record upload
+        9. Clean up temporary files
         """
         logger.info("--- YouTube AI Agent execution triggered ---")
+        update_agent_pipeline_state(
+            status="running",
+            step_id="authenticating",
+            step_label="Checking Google OAuth & Permissions",
+            progress=10,
+            log_message="Agent initialized. Verifying Google OAuth token...",
+        )
         settings: AgentSettings = self.repo.get_settings()
 
         if not force_run and not settings.enabled:
             logger.info("Agent is currently disabled in settings. Skipping run.")
+            update_agent_pipeline_state(
+                status="idle",
+                step_id="idle",
+                step_label="Agent Disabled",
+                progress=0,
+                log_message="Agent disabled in settings. Skipping automatic run.",
+            )
             return {"success": False, "message": "Agent is disabled. Enable agent or use manual upload."}
 
         # 1. Check Google Auth
         auth_status = self.auth_service.get_auth_status()
         if not auth_status["is_authenticated"]:
             logger.error("Google account is not authenticated.")
+            update_agent_pipeline_state(
+                status="error",
+                step_id="auth_failed",
+                step_label="Google Authentication Failed",
+                progress=0,
+                log_message="Error: Google Account not authenticated. Connect account in settings.",
+            )
             return {"success": False, "message": "Google account not authenticated."}
 
         # 2. Check Drive folder configuration
         selected_folder = self.repo.get_selected_folder()
         if not selected_folder:
             logger.error("No Google Drive folder selected for monitoring.")
+            update_agent_pipeline_state(
+                status="error",
+                step_id="folder_missing",
+                step_label="No Drive Folder Selected",
+                progress=0,
+                log_message="Error: No Google Drive folder selected for sync.",
+            )
             return {"success": False, "message": "No Google Drive folder selected."}
 
         # 3. Synchronize folder to discover any newly added files
+        update_agent_pipeline_state(
+            status="running",
+            step_id="scanning_drive",
+            step_label=f"Scanning Drive folder '{selected_folder.folder_name}'",
+            progress=25,
+            log_message=f"Syncing files from Drive folder '{selected_folder.folder_name}'...",
+        )
         try:
             self.drive_service.sync_folder_videos(
                 selected_folder.folder_id,
@@ -66,9 +103,23 @@ class AgentService:
             logger.warning(f"Unable to sync latest Drive folder contents: {e}")
 
         # 4. Select random unuploaded video
+        update_agent_pipeline_state(
+            status="running",
+            step_id="selecting_video",
+            step_label="Selecting Target Video",
+            progress=35,
+            log_message="Querying database for next unuploaded video...",
+        )
         video: Optional[Video] = self.repo.select_random_unuploaded_video(selected_folder.folder_id)
         if not video:
             logger.info("No unuploaded videos found in the selected folder. All videos uploaded!")
+            update_agent_pipeline_state(
+                status="idle",
+                step_id="all_uploaded",
+                step_label="All Videos Uploaded",
+                progress=100,
+                log_message="All videos in Drive folder have been uploaded.",
+            )
             return {
                 "success": False,
                 "message": "No unuploaded videos remaining in folder.",
@@ -76,6 +127,14 @@ class AgentService:
             }
 
         logger.info(f"Selected video for upload: '{video.file_name}' (ID: {video.drive_file_id})")
+        update_agent_pipeline_state(
+            status="running",
+            step_id="downloading",
+            step_label=f"Downloading '{video.file_name}'",
+            progress=45,
+            current_video=video.file_name,
+            log_message=f"Starting download from Drive: {video.file_name}...",
+        )
 
         # 5. Create AgentRun tracking entry
         agent_run = self.repo.create_agent_run(video_id=video.id)
@@ -87,9 +146,27 @@ class AgentService:
             local_file_path = self.video_service.download_selected_video(video)
 
             # 7. Extract metadata
+            update_agent_pipeline_state(
+                status="running",
+                step_id="analyzing_video",
+                step_label="Analyzing Video Metadata",
+                progress=60,
+                current_video=video.file_name,
+                log_message="Extracting video stream codec, resolution and duration...",
+            )
             meta = extract_video_metadata(local_file_path)
 
             # 8. Generate Metadata (Title, Description, Tags)
+            provider_name = getattr(settings, "ai_provider", "gemini")
+            model_name = getattr(settings, "gemini_model", "gemini-2.5-flash-lite") if provider_name == "gemini" else getattr(settings, "ollama_model", "qwen3:8b")
+            update_agent_pipeline_state(
+                status="running",
+                step_id="generating_metadata",
+                step_label=f"AI Reasoning ({provider_name.upper()} - {model_name})",
+                progress=72,
+                current_video=video.file_name,
+                log_message=f"Prompting {provider_name.upper()} AI for viral YouTube title, description and tags...",
+            )
             logger.info("Generating metadata via AI Service...")
             if settings.generate_title:
                 title = self.ai_service.generate_title(video.file_name, meta)
@@ -112,16 +189,37 @@ class AgentService:
             thumbnail_path = None
             if getattr(settings, "generate_thumbnail", True):
                 try:
-                    logger.info("Generating AI thumbnail with Gemini Imagen...")
+                    update_agent_pipeline_state(
+                        status="running",
+                        step_id="generating_thumbnail",
+                        step_label="Generating 16:9 Thumbnail",
+                        progress=82,
+                        current_video=video.file_name,
+                        log_message=f"Generating high-impact 16:9 thumbnail for '{title}'...",
+                    )
+                    logger.info("Generating thumbnail for video...")
                     thumbnail_path = self.ai_service.generate_thumbnail(
                         title=title,
                         file_name=video.file_name,
+                        video_path=local_file_path,
                         video_id=video.drive_file_id,
                     )
+                    if thumbnail_path:
+                        logger.info(f"Video thumbnail generated successfully: {thumbnail_path}")
+                    else:
+                        logger.warning("Thumbnail generation returned None")
                 except Exception as e:
                     logger.warning(f"AI thumbnail generation failed/skipped: {e}")
 
             # 10. Upload to YouTube
+            update_agent_pipeline_state(
+                status="running",
+                step_id="uploading_youtube",
+                step_label="Streaming Upload to YouTube Data API",
+                progress=90,
+                current_video=video.file_name,
+                log_message="Streaming video bytes & setting metadata via YouTube Data API v3...",
+            )
             upload_record = self.upload_service.process_upload_with_retry(
                 video=video,
                 file_path=local_file_path,
@@ -134,10 +232,10 @@ class AgentService:
                 thumbnail_path=thumbnail_path,
             )
 
-            # 10. Clean up temporary local file
+            # 11. Clean up temporary local file
             self.video_service.cleanup_video(video)
 
-            # 11. Complete Agent Run
+            # 12. Complete Agent Run
             self.repo.finish_agent_run(
                 agent_run.id,
                 status="success",
@@ -154,6 +252,15 @@ class AgentService:
                 "status": settings.privacy_status,
             }
             logger.info(f"Agent run completed successfully: {result}")
+            update_agent_pipeline_state(
+                status="success",
+                step_id="complete",
+                step_label=f"Upload Complete (ID: {upload_record.youtube_video_id})",
+                progress=100,
+                current_video=video.file_name,
+                log_message=f"Pipeline succeeded! YouTube video published: https://youtu.be/{upload_record.youtube_video_id}",
+                last_result=result,
+            )
             return result
 
         except Exception as e:
@@ -161,10 +268,21 @@ class AgentService:
             logger.error(f"Agent run failed: {e}\n{err_trace}")
             self.repo.finish_agent_run(agent_run.id, status="failed", error_message=str(e))
             self.video_service.cleanup_video(video)
-            return {
+            err_result = {
                 "success": False,
                 "message": f"Agent run failed: {str(e)}",
                 "error": str(e),
                 "drive_file_id": video.drive_file_id,
                 "file_name": video.file_name,
             }
+            update_agent_pipeline_state(
+                status="error",
+                step_id="failed",
+                step_label="Pipeline Execution Error",
+                progress=0,
+                current_video=video.file_name,
+                log_message=f"Error occurred during upload execution: {str(e)}",
+                last_result=err_result,
+            )
+            return err_result
+

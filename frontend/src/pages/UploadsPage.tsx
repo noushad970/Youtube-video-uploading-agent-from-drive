@@ -190,6 +190,31 @@ export const UploadsPage: React.FC<UploadsPageProps> = ({
             </div>
 
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              {/* Thumbnail Preview */}
+              {selectedUpload.youtube_video_id && (
+                <div>
+                  <label className="text-xs text-slate-400 font-semibold uppercase">YouTube Video & Thumbnail</label>
+                  <div className="mt-1 relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 aspect-video max-w-sm">
+                    <img
+                      src={`https://i.ytimg.com/vi/${selectedUpload.youtube_video_id}/hqdefault.jpg`}
+                      alt="Thumbnail Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                    <a
+                      href={`https://youtu.be/${selectedUpload.youtube_video_id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-black/80 hover:bg-red-600 text-white text-xs font-medium flex items-center gap-1 backdrop-blur-sm transition"
+                    >
+                      Watch on YouTube <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-xs text-slate-400 font-semibold uppercase">Generated Title</label>
                 <div className="mt-1 p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-sm font-medium">
@@ -198,14 +223,31 @@ export const UploadsPage: React.FC<UploadsPageProps> = ({
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 font-semibold uppercase">Description</label>
-                <div className="mt-1 p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-mono whitespace-pre-wrap">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-slate-400 font-semibold uppercase">Long Description</label>
+                  {selectedUpload.description && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedUpload.description || "");
+                        alert("Description copied to clipboard!");
+                      }}
+                      className="text-xs text-amber-400 hover:text-amber-300 font-medium"
+                    >
+                      Copy Description
+                    </button>
+                  )}
+                </div>
+                <div className="mt-1 p-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
                   {selectedUpload.description || "No description provided."}
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 font-semibold uppercase">Tags</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-slate-400 font-semibold uppercase">
+                    Tags ({selectedUpload.tags ? selectedUpload.tags.length : 0})
+                  </label>
+                </div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {selectedUpload.tags && selectedUpload.tags.length > 0 ? (
                     selectedUpload.tags.map((tag, idx) => (

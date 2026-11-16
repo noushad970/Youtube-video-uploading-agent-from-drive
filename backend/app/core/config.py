@@ -46,8 +46,8 @@ class Settings(BaseSettings):
         description="Google Gemini API key for metadata and Imagen 3 thumbnail generation",
     )
     GEMINI_MODEL: str = Field(
-        default="gemini-2.5-flash-lite",
-        description="Gemini LLM model for title, description, and tag generation (e.g. gemini-2.5-flash-lite, gemini-2.5-flash, gemini-2.5-pro)",
+        default="gemini-3.5-flash-lite",
+        description="Gemini LLM model for title, description, and tag generation (e.g. gemini-3.5-flash-lite, gemini-3.5-flash, gemini-3.8-flash)",
     )
     GEMINI_IMAGE_MODEL: str = Field(
         default="imagen-3.0-generate-002",

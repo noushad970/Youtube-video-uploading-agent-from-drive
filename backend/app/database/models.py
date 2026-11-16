@@ -135,7 +135,7 @@ class AgentSettings(Base):
     generate_thumbnail = Column(Boolean, default=True, nullable=False)
     ai_provider = Column(String(64), default="gemini", nullable=False)  # "gemini" or "ollama"
     gemini_api_key = Column(String(255), nullable=True)
-    gemini_model = Column(String(128), default="gemini-2.5-flash-lite", nullable=False)
+    gemini_model = Column(String(128), default="gemini-3.5-flash-lite", nullable=False)
     gemini_image_model = Column(String(128), default="imagen-3.0-generate-002", nullable=False)
     ollama_model = Column(String(128), default="qwen3:8b", nullable=False)
     max_retries = Column(Integer, default=3, nullable=False)

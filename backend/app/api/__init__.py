@@ -7,6 +7,7 @@ from app.api.agent import router as agent_router
 from app.api.settings import router as settings_router
 from app.api.uploads import router as uploads_router
 from app.api.logs import router as logs_router
+from app.api.debug import router as debug_router
 
 api_router = APIRouter()
 api_router.include_router(auth_router)
@@ -17,3 +18,4 @@ api_router.include_router(agent_router)
 api_router.include_router(settings_router)
 api_router.include_router(uploads_router)
 api_router.include_router(logs_router)
+api_router.include_router(debug_router)

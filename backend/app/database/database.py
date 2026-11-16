@@ -30,14 +30,14 @@ def get_db() -> Generator[Session, None, None]:
 from sqlalchemy import text
 
 def _migrate_db() -> None:
-    """Safely apply missing column migrations to SQLite."""
+    """Safely apply missing column migrations and enforce modern defaults."""
     with engine.connect() as conn:
         migrations = [
             ("uploads", "thumbnail_path", "VARCHAR(1024)"),
             ("agent_settings", "generate_thumbnail", "BOOLEAN DEFAULT 1"),
             ("agent_settings", "ai_provider", "VARCHAR(64) DEFAULT 'gemini'"),
             ("agent_settings", "gemini_api_key", "VARCHAR(255)"),
-            ("agent_settings", "gemini_model", "VARCHAR(128) DEFAULT 'gemini-2.5-flash'"),
+            ("agent_settings", "gemini_model", "VARCHAR(128) DEFAULT 'gemini-3.5-flash-lite'"),
             ("agent_settings", "gemini_image_model", "VARCHAR(128) DEFAULT 'imagen-3.0-generate-002'"),
         ]
         for table, col, col_type in migrations:
@@ -46,6 +46,31 @@ def _migrate_db() -> None:
                 conn.commit()
             except Exception:
                 pass
+
+        # Data migrations: Ensure modern models (3.5+) and active features
+        try:
+            # Upgrade deprecated 2.5 or older models
+            conn.execute(text(
+                "UPDATE agent_settings SET gemini_model = 'gemini-3.5-flash-lite' "
+                "WHERE gemini_model IS NULL OR gemini_model LIKE '%2.5%' OR gemini_model LIKE '%1.5%'"
+            ))
+            # Enable thumbnail, description, tags by default
+            conn.execute(text(
+                "UPDATE agent_settings SET generate_thumbnail = 1, generate_description = 1, generate_tags = 1, generate_title = 1 "
+                "WHERE generate_thumbnail IS NULL OR generate_description IS NULL OR generate_tags IS NULL"
+            ))
+            # Sync API key from environment if currently empty or invalid placeholder
+            if settings.GEMINI_API_KEY:
+                conn.execute(
+                    text(
+                        "UPDATE agent_settings SET gemini_api_key = :key "
+                        "WHERE gemini_api_key IS NULL OR gemini_api_key = '' OR gemini_api_key LIKE 'Option%'"
+                    ),
+                    {"key": settings.GEMINI_API_KEY},
+                )
+            conn.commit()
+        except Exception:
+            pass
 
 
 def init_db() -> None:

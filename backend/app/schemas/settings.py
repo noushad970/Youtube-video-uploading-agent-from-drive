@@ -15,7 +15,7 @@ class AgentSettingsSchema(BaseModel):
     generate_thumbnail: bool = True
     ai_provider: str = "gemini"
     gemini_api_key: Optional[str] = None
-    gemini_model: str = "gemini-2.5-flash-lite"
+    gemini_model: str = "gemini-3.5-flash-lite"
     gemini_image_model: str = "imagen-3.0-generate-002"
     ollama_model: str = "qwen3:8b"
     max_retries: int = Field(default=3, ge=1, le=10)

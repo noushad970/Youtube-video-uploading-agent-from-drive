@@ -68,7 +68,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               Monitoring Google Drive folder <span className="font-semibold text-white">"{status?.selected_folder_name || "None Selected"}"</span>.
               Randomly selects unuploaded videos, generates AI metadata & 16:9 thumbnails using{" "}
               <span className="text-amber-400 font-medium">
-                {status?.ai_provider === "gemini" ? "Google Gemini AI (2.5 Flash-Lite & Imagen 3)" : "Ollama AI"}
+                {status?.ai_provider === "gemini" ? "Google Gemini AI (3.5 Flash-Lite & 16:9 Thumbnail)" : "Ollama AI"}
               </span>
               , and uploads to YouTube safely.
             </p>
@@ -209,7 +209,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   </h4>
                   <p className="text-xs text-slate-400">
                     {status?.ai_provider === "gemini"
-                      ? "Gemini 2.5 Flash-Lite & Imagen 3"
+                      ? "Gemini 3.5 Flash-Lite & 16:9 Thumbnail"
                       : "Metadata generation"}
                   </p>
                 </div>

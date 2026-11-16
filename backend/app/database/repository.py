@@ -27,6 +27,7 @@ class Repository:
     def get_settings(self) -> AgentSettings:
         settings = self.db.query(AgentSettings).first()
         if not settings:
+            from app.core.config import settings as app_cfg
             settings = AgentSettings(
                 enabled=False,
                 interval_minutes=360,
@@ -35,6 +36,11 @@ class Repository:
                 generate_title=True,
                 generate_description=True,
                 generate_tags=True,
+                generate_thumbnail=True,
+                ai_provider="gemini",
+                gemini_api_key=app_cfg.GEMINI_API_KEY or None,
+                gemini_model="gemini-3.5-flash-lite",
+                gemini_image_model="imagen-3.0-generate-002",
                 ollama_model="qwen3:8b",
                 max_retries=3,
                 delete_after_upload=True,
@@ -43,6 +49,11 @@ class Repository:
             self.db.add(settings)
             self.db.commit()
             self.db.refresh(settings)
+        else:
+            # Auto-upgrade deprecated models if present
+            if settings.gemini_model and any(old in settings.gemini_model for old in ["2.5", "1.5"]):
+                settings.gemini_model = "gemini-3.5-flash-lite"
+                self.db.commit()
         return settings
 
     def update_settings(self, **kwargs) -> AgentSettings:
