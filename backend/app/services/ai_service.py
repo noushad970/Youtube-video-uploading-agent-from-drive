@@ -106,7 +106,7 @@ class AIService:
         if not api_key:
             return None
 
-        model = self.gemini_model or "gemini-2.5-flash"
+        model = self.gemini_model or "gemini-3.5-flash-lite"
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],

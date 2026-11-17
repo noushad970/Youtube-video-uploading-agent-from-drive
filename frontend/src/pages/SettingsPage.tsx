@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { AgentSettings, DriveFolder } from "../types";
+import { GeminiApiKeyCard } from "../components/GeminiApiKeyCard";
 
 interface SettingsPageProps {
   settings: AgentSettings | null;
@@ -307,37 +308,45 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
 
-        {/* Gemini Settings */}
+        {/* Gemini Settings & BYOK API Key */}
+        <GeminiApiKeyCard
+          apiKey={formData.gemini_api_key}
+          onSaveKey={async (newKey: string) => {
+            setFormData((prev) => ({ ...prev, gemini_api_key: newKey }));
+            await onSaveSettings({ gemini_api_key: newKey });
+          }}
+          defaultOpenGuide={!formData.gemini_api_key}
+        />
+
+        {/* Gemini Model Intelligence Configuration */}
         <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-4">
           <div className="flex items-center space-x-2 text-sm font-semibold text-slate-200">
-            <Sparkles className="h-4 w-4 text-amber-400" />
-            <span>Google Gemini Settings</span>
+            <Sparkles className="h-4 w-4 text-purple-400" />
+            <span>Gemini Model & Intelligence Tier</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-400 block mb-1.5">Google Gemini API Key</label>
-              <input
-                type="password"
-                value={formData.gemini_api_key ?? ""}
-                onChange={(e) => setFormData({ ...formData, gemini_api_key: e.target.value })}
-                placeholder="AIzaSy..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
-              />
-              <p className="text-[11px] text-slate-500 mt-1">Free key available at <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" className="text-amber-400 hover:underline">aistudio.google.com</a></p>
-            </div>
-
             <div>
               <label className="text-xs font-semibold text-slate-400 block mb-1.5">Gemini Text Model</label>
               <select
                 value={formData.gemini_model ?? "gemini-3.5-flash-lite"}
                 onChange={(e) => setFormData({ ...formData, gemini_model: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-purple-500"
               >
                 <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Default - Fast, Ultra-Smart & Recommended)</option>
                 <option value="gemini-3.5-flash">gemini-3.5-flash (High Performance & Detail)</option>
                 <option value="gemini-3.8-flash">gemini-3.8-flash (Latest Next-Gen Intelligence)</option>
               </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-400 block mb-1.5">Thumbnail Generation Engine</label>
+              <input
+                type="text"
+                disabled
+                value="Imagen 3 / Smart Frame Extraction (16:9)"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-slate-400 font-mono"
+              />
             </div>
           </div>
         </div>

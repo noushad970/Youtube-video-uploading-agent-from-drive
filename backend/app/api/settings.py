@@ -1,9 +1,15 @@
+import httpx
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.database.repository import Repository
-from app.schemas.settings import AgentSettingsSchema, AgentSettingsUpdate
+from app.schemas.settings import (
+    AgentSettingsSchema,
+    AgentSettingsUpdate,
+    GeminiKeyVerifyRequest,
+    GeminiKeyVerifyResponse,
+)
 from app.services.scheduler_service import SchedulerService
 
 router = APIRouter(prefix="/api/settings", tags=["Settings"])
@@ -34,3 +40,67 @@ def update_settings(
             SchedulerService.pause_job()
 
     return updated
+
+
+@router.post("/verify-gemini-key", response_model=GeminiKeyVerifyResponse)
+def verify_gemini_key(
+    req: GeminiKeyVerifyRequest,
+    db: Session = Depends(get_db),
+):
+    """Test and verify that a Google Gemini API Key is valid with Gemini 3.5."""
+    repo = Repository(db)
+    current_settings = repo.get_settings()
+    key_to_test = (req.api_key or "").strip()
+    if not key_to_test:
+        key_to_test = (current_settings.gemini_api_key or "").strip()
+
+    if not key_to_test:
+        return GeminiKeyVerifyResponse(
+            valid=False,
+            message="No API key provided. Please paste your Gemini API key from Google AI Studio.",
+            model=req.model or "gemini-3.5-flash-lite",
+        )
+
+    model = req.model or current_settings.gemini_model or "gemini-3.5-flash-lite"
+    if any(old in model.lower() for old in ["2.5", "1.5", "1.0", "gemini-pro"]):
+        model = "gemini-3.5-flash-lite"
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key_to_test}"
+    payload = {
+        "contents": [{"parts": [{"text": "Reply with 'OK'."}]}],
+        "generationConfig": {"temperature": 0.1, "maxOutputTokens": 5},
+    }
+
+    try:
+        with httpx.Client(timeout=15) as client:
+            res = client.post(url, json=payload)
+            if res.status_code == 200:
+                return GeminiKeyVerifyResponse(
+                    valid=True,
+                    message=f"Success! Gemini API Key is active & verified with '{model}'.",
+                    model=model,
+                )
+            else:
+                try:
+                    data = res.json()
+                    err = data.get("error", {}).get("message", res.text)
+                except Exception:
+                    err = res.text
+                return GeminiKeyVerifyResponse(
+                    valid=False,
+                    message=f"Gemini API returned error ({res.status_code}): {err}",
+                    model=model,
+                )
+    except httpx.TimeoutException:
+        return GeminiKeyVerifyResponse(
+            valid=False,
+            message="Connection to Google AI Studio timed out. Please check your internet connection.",
+            model=model,
+        )
+    except Exception as e:
+        return GeminiKeyVerifyResponse(
+            valid=False,
+            message=f"Verification failed: {str(e)}",
+            model=model,
+        )
+

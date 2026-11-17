@@ -13,13 +13,16 @@ import {
   RefreshCw,
   FolderSync,
 } from "lucide-react";
-import { AgentStatus, AuthStatus, UploadRecord } from "../types";
+import { AgentStatus, AuthStatus, UploadRecord, AgentSettings } from "../types";
 import { StatsCard } from "../components/StatsCard";
 import { StatusBadge } from "../components/StatusBadge";
+import { GeminiApiKeyCard } from "../components/GeminiApiKeyCard";
 
 interface DashboardPageProps {
   status: AgentStatus | null;
   auth: AuthStatus | null;
+  settings?: AgentSettings | null;
+  onSaveSettings?: (settings: Partial<AgentSettings>) => Promise<void>;
   recentUploads: UploadRecord[];
   onUploadNow: () => void;
   onSyncFolder: () => void;
@@ -32,6 +35,8 @@ interface DashboardPageProps {
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   status,
   auth,
+  settings,
+  onSaveSettings,
   recentUploads,
   onUploadNow,
   onSyncFolder,
@@ -96,6 +101,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Gemini API Key & BYOK Configuration Card */}
+      <GeminiApiKeyCard
+        apiKey={settings?.gemini_api_key}
+        onSaveKey={async (newKey: string) => {
+          if (onSaveSettings) {
+            await onSaveSettings({ gemini_api_key: newKey });
+          }
+        }}
+        defaultOpenGuide={!settings?.gemini_api_key}
+      />
 
       {/* Overview Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

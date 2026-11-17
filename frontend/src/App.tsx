@@ -345,6 +345,8 @@ export const App: React.FC = () => {
           <DashboardPage
             status={status}
             auth={auth}
+            settings={settings}
+            onSaveSettings={handleSaveSettings}
             recentUploads={uploads}
             onUploadNow={handleUploadNow}
             onSyncFolder={handleSyncFolder}

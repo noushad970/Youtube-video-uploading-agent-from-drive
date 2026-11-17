@@ -158,7 +158,7 @@ class AgentService:
 
             # 8. Generate Metadata (Title, Description, Tags)
             provider_name = getattr(settings, "ai_provider", "gemini")
-            model_name = getattr(settings, "gemini_model", "gemini-2.5-flash-lite") if provider_name == "gemini" else getattr(settings, "ollama_model", "qwen3:8b")
+            model_name = getattr(settings, "gemini_model", "gemini-3.5-flash-lite") if provider_name == "gemini" else getattr(settings, "ollama_model", "qwen3:8b")
             update_agent_pipeline_state(
                 status="running",
                 step_id="generating_metadata",

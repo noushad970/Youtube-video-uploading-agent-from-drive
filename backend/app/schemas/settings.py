@@ -43,3 +43,14 @@ class AgentSettingsUpdate(BaseModel):
     max_retries: Optional[int] = Field(default=None, ge=1, le=10)
     delete_after_upload: Optional[bool] = None
     fallback_if_ai_unavailable: Optional[bool] = None
+
+
+class GeminiKeyVerifyRequest(BaseModel):
+    api_key: Optional[str] = None
+    model: Optional[str] = "gemini-3.5-flash-lite"
+
+
+class GeminiKeyVerifyResponse(BaseModel):
+    valid: bool
+    message: str
+    model: str

@@ -108,6 +108,13 @@ export const apiClient = {
     const res = await api.put("/settings", settings);
     return res.data;
   },
+  verifyGeminiKey: async (payload?: {
+    api_key?: string;
+    model?: string;
+  }): Promise<{ valid: boolean; message: string; model: string }> => {
+    const res = await api.post("/settings/verify-gemini-key", payload || {});
+    return res.data;
+  },
 
   // Agent Control
   getAgentStatus: async (): Promise<AgentStatus> => {
