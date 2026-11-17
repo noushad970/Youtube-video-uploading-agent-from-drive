@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  AlertTriangle,
   HardDrive,
   Youtube,
   Cpu,
@@ -12,6 +13,7 @@ import {
   ArrowUpRight,
   RefreshCw,
   FolderSync,
+  ExternalLink,
 } from "lucide-react";
 import { AgentStatus, AuthStatus, UploadRecord, AgentSettings } from "../types";
 import { StatsCard } from "../components/StatsCard";
@@ -57,6 +59,42 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
   return (
     <div className="space-y-8 animate-fadeIn">
+      {/* Top Warning Alert Banner if no API key is provided */}
+      {(!settings?.gemini_api_key || settings.gemini_api_key.trim().length <= 10) && (
+        <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-amber-950/90 via-red-950/60 to-amber-950/90 border-2 border-amber-500/70 shadow-xl shadow-amber-950/30 text-amber-200 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fadeIn">
+          <div className="flex items-start sm:items-center space-x-3.5">
+            <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 shrink-0">
+              <AlertTriangle className="h-6 w-6 text-amber-400 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="font-bold text-sm sm:text-base text-white tracking-wide">
+                  ⚠️ WARNING: Gemini API Key Required First!
+                </h3>
+                <span className="text-[10px] px-2 py-0.5 rounded uppercase font-extrabold bg-red-500/20 text-red-300 border border-red-500/40">
+                  Setup Required
+                </span>
+              </div>
+              <p className="text-xs text-amber-200/90 mt-1 leading-relaxed">
+                You <strong>must provide a valid Google Gemini API key first</strong> before automated video uploading, AI metadata, or thumbnail generation can run.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <a
+              href="https://aistudio.google.com/api-keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition"
+            >
+              <span>Get Free Key (Google AI Studio)</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner / Hero */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-red-950/40 via-slate-900/60 to-slate-900 border border-red-500/20 shadow-xl">
         <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />

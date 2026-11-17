@@ -7,6 +7,7 @@ import {
   EyeOff,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Save,
   RefreshCw,
   HelpCircle,
@@ -160,17 +161,27 @@ export const GeminiApiKeyCard: React.FC<GeminiApiKeyCardProps> = ({
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400">
-            <Key className="h-5 w-5" />
+          <div className={`p-2.5 rounded-xl border ${
+            isKeyConfigured
+              ? "bg-purple-500/15 border-purple-500/30 text-purple-400"
+              : "bg-amber-500/20 border-amber-500/40 text-amber-300"
+          }`}>
+            {isKeyConfigured ? <Key className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5 animate-pulse" />}
           </div>
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-base font-bold text-white tracking-wide">
                 Google Gemini API Key
               </h3>
-              <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
-                BYOK • 100% Free
-              </span>
+              {isKeyConfigured ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                  BYOK • Active
+                </span>
+              ) : (
+                <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold bg-amber-500/25 border border-amber-500/50 text-amber-300 animate-pulse">
+                  ⚠️ API Key Required First
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Power automated title, rich description, 25 SEO tags & 16:9 thumbnail generation.
@@ -204,13 +215,57 @@ export const GeminiApiKeyCard: React.FC<GeminiApiKeyCardProps> = ({
         </div>
       </div>
 
+      {/* Prominent Warning Banner when no key is provided */}
+      {!isKeyConfigured && (
+        <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-amber-950/80 via-red-950/60 to-amber-950/80 border-2 border-amber-500/70 text-amber-200 shadow-lg shadow-amber-950/30 animate-fadeIn">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0 mt-0.5">
+              <AlertTriangle className="h-5 w-5 text-amber-400 animate-pulse" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-white tracking-wide">
+                  ⚠️ WARNING: You must give your Gemini API key first!
+                </h4>
+                <span className="text-[10px] px-2 py-0.5 rounded font-extrabold uppercase bg-red-500/20 text-red-300 border border-red-500/40">
+                  Required First
+                </span>
+              </div>
+              <p className="text-xs text-amber-200/90 mt-1 leading-relaxed">
+                Video uploading and AI metadata generation are <strong>currently disabled</strong> until you provide your Gemini API key. Please create your free key in Google AI Studio, paste it below, and the app will auto-save it immediately!
+              </p>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <a
+                  href="https://aistudio.google.com/api-keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition shadow"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Create Free API Key (Google AI Studio) ↗</span>
+                </a>
+                <span className="text-[11px] text-amber-300/80 italic">
+                  * 100% free with zero API costs
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Gemini API Input & Auto-Save controls */}
       <div className="space-y-3">
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
               <span>Your Gemini API Key</span>
-              <span className="text-[10px] text-slate-500 font-normal">(Auto-saves on typing)</span>
+              {!isKeyConfigured ? (
+                <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
+                  ⚠️ REQUIRED FIRST
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-500 font-normal">(Auto-saves on typing)</span>
+              )}
             </label>
 
             {/* Auto-save status feedback */}
@@ -253,11 +308,15 @@ export const GeminiApiKeyCard: React.FC<GeminiApiKeyCardProps> = ({
               type={showKey ? "text" : "password"}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Paste your Gemini API key here (e.g. AIzaSy...)"
+              placeholder={
+                !isKeyConfigured
+                  ? "⚠️ Warning: Paste your Gemini API key first to enable uploads (e.g. AIzaSy...)"
+                  : "Paste your Gemini API key here (e.g. AIzaSy...)"
+              }
               className={`w-full pl-3.5 pr-28 py-2.5 rounded-xl bg-slate-950/90 border text-sm text-slate-100 placeholder-slate-500 font-mono transition focus:outline-none ${
                 isKeyConfigured
                   ? "border-slate-700/80 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50"
-                  : "border-amber-500/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50"
+                  : "border-amber-500 ring-2 ring-amber-500/20 focus:border-amber-400 focus:ring-amber-500/40"
               }`}
             />
 

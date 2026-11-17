@@ -30,6 +30,18 @@ def update_settings(
     """Update agent configuration settings."""
     repo = Repository(db)
     data = update_data.model_dump(exclude_unset=True)
+
+    if data.get("enabled") is True:
+        curr = repo.get_settings()
+        target_provider = data.get("ai_provider") or curr.ai_provider or "gemini"
+        target_key = data.get("gemini_api_key") if "gemini_api_key" in data else curr.gemini_api_key
+        if target_provider == "gemini" and (not target_key or len(str(target_key).strip()) <= 10):
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail="Warning: No Gemini API Key provided! You must give a valid Gemini API key first before activating automated uploads.",
+            )
+
     updated = repo.update_settings(**data)
 
     # If enabled or interval changed, update scheduler

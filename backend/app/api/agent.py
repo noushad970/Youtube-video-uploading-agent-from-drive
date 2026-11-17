@@ -66,6 +66,13 @@ def get_agent_status(db: Session = Depends(get_db)):
 def start_agent(db: Session = Depends(get_db)):
     """Enable autonomous scheduling for the agent."""
     repo = Repository(db)
+    settings = repo.get_settings()
+    ai_service = AIService(db)
+    if getattr(settings, "ai_provider", "gemini") == "gemini" and not ai_service.gemini_api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="Warning: No Gemini API Key provided! You must give a valid Gemini API key first before activating automated uploads.",
+        )
     settings = repo.update_settings(enabled=True)
     SchedulerService.reschedule(settings.interval_minutes)
     return {"success": True, "message": f"Agent activated! Running every {settings.interval_minutes} minutes."}

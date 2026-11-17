@@ -86,7 +86,21 @@ class AgentService:
             )
             return {"success": False, "message": "No Google Drive folder selected."}
 
-        # 3. Synchronize folder to discover any newly added files
+        # 3. Check Gemini API key requirement
+        provider = getattr(settings, "ai_provider", "gemini")
+        if provider == "gemini" and not self.ai_service.gemini_api_key:
+            warning_msg = "Warning: No Gemini API Key provided! You must give a valid Gemini API key first before automated video uploading can run."
+            logger.warning(warning_msg)
+            update_agent_pipeline_state(
+                status="error",
+                step_id="gemini_key_missing",
+                step_label="Gemini API Key Required First",
+                progress=0,
+                log_message=warning_msg,
+            )
+            return {"success": False, "message": warning_msg}
+
+        # 4. Synchronize folder to discover any newly added files
         update_agent_pipeline_state(
             status="running",
             step_id="scanning_drive",

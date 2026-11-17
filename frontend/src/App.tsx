@@ -157,8 +157,20 @@ export const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [fetchStatusAndAuth]);
 
+  // Helper: check if user hasn't provided a Gemini API key yet
+  const isGeminiKeyMissing = () => {
+    const provider = settings?.ai_provider || "gemini";
+    const key = settings?.gemini_api_key;
+    return provider === "gemini" && (!key || key.trim().length <= 10);
+  };
+
   // Actions
   const handleToggleAgent = async () => {
+    if (!status?.is_running && isGeminiKeyMissing()) {
+      showToast("error", "⚠️ Warning: Gemini API key required! You must give your Gemini API key first before activating automated uploads.");
+      setActiveTab("dashboard");
+      return;
+    }
     try {
       if (status?.is_running) {
         await apiClient.stopAgent();
@@ -174,6 +186,11 @@ export const App: React.FC = () => {
   };
 
   const handleUploadNow = async () => {
+    if (isGeminiKeyMissing()) {
+      showToast("error", "⚠️ Warning: Gemini API key required! You must give your Gemini API key first before uploading videos.");
+      setActiveTab("dashboard");
+      return;
+    }
     setIsUploading(true);
     showToast("info", "Autonomous upload sequence started...");
     try {
@@ -220,6 +237,10 @@ export const App: React.FC = () => {
   };
 
   const handleManualUploadSpecific = async (video: VideoItem) => {
+    if (isGeminiKeyMissing()) {
+      showToast("error", "⚠️ Warning: Gemini API key required! You must give your Gemini API key first before uploading videos.");
+      return;
+    }
     setIsUploading(true);
     showToast("info", `Uploading "${video.file_name}" to YouTube...`);
     try {
