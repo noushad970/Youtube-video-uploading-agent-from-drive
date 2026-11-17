@@ -173,37 +173,58 @@ class AIService:
 
         return None
 
-    def generate_title(self, file_name: str, video_meta: Optional[Dict[str, Any]] = None) -> str:
+    def polish_title(
+        self,
+        raw_title: Optional[str] = None,
+        file_name: str = "",
+        video_meta: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
-        Generate a concise, human-friendly YouTube title (max 100 characters).
-        Falls back to formatted filename if AI generation fails.
+        Polish and optimize a raw title or filename into a professional, standard, high-CTR YouTube title.
+        Cleans technical markers (e.g. 1080p, x264), version numbers (v1, final), extensions (.mp4),
+        and applies YouTube Title Case.
         """
-        fallback_title = self._clean_filename_to_title(file_name)
-        prompt = f"""You are an expert YouTube title strategist.
-Based on the following video file information, generate a concise, engaging, and accurate YouTube video title.
-Video Filename: {file_name}
+        candidate = (raw_title or "").strip()
+        if not candidate or candidate.lower() == file_name.lower():
+            candidate = self._clean_filename_to_title(file_name)
+
+        fallback = self._clean_filename_to_title(candidate)
+        prompt = f"""You are an elite YouTube title strategist and copywriter.
+Polish and optimize the following raw video title or filename into a professional, engaging, high-CTR YouTube video title:
+
+Raw Title / Subject: {candidate}
+Original Filename: {file_name}
 Duration: {video_meta.get('duration', 'unknown') if video_meta else 'unknown'} seconds
 Resolution: {video_meta.get('resolution', 'unknown') if video_meta else 'unknown'}
 
 Requirements:
-- Maximum 90 characters.
-- Engaging, professional, and directly describes the content.
-- Do not use clickbait or misleading claims.
-- Return ONLY the final title text, without quotes, explanations, or prefixes like "Title:".
+- Polish into natural, high-impact Title Case.
+- Completely remove messy technical artifacts, file extensions (.mp4, .mov, .mkv), timestamps, version numbers (v1, v2, final), and codec markers (1080p, 4k, 60fps).
+- Keep length between 55 and 85 characters (optimal for YouTube feed previews).
+- Do not make misleading claims or deceptive clickbait.
+- Return ONLY the final polished title text, with NO surrounding quotes, NO markdown formatting, and NO prefixes like 'Title:'.
 """
         try:
             ai_response = self._call_ai(prompt, temperature=0.6)
             if ai_response:
                 clean_title = ai_response.strip().strip('"').strip("'").strip()
                 clean_title = re.sub(r"^(Title\s*:\s*|\*\*Title\s*:\s*\*\*)", "", clean_title, flags=re.IGNORECASE)
+                clean_title = clean_title.strip()
                 if len(clean_title) > 100:
                     clean_title = clean_title[:97] + "..."
                 if clean_title:
                     return clean_title
         except Exception as e:
-            logger.warning(f"Failed to generate title with AI: {e}")
+            logger.warning(f"Failed to polish title with AI: {e}")
 
-        return fallback_title
+        return fallback
+
+    def generate_title(self, file_name: str, video_meta: Optional[Dict[str, Any]] = None) -> str:
+        """
+        Generate a concise, human-friendly YouTube title (max 100 characters).
+        Falls back to formatted filename if AI generation fails.
+        """
+        return self.polish_title(raw_title=None, file_name=file_name, video_meta=video_meta)
 
     def generate_description(
         self,
@@ -212,56 +233,58 @@ Requirements:
         video_meta: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
-        Generate a comprehensive, detailed, long-form YouTube video description (350-600+ words).
-        Includes overview & hook, what viewers will learn, chapter breakdown placeholders,
-        pro-tips, call to action, and search-optimized hashtags.
-        Falls back to a rich structured long description if AI is unavailable.
+        Generate a comprehensive, standard YouTube video description directly based on the polished title.
+        Includes structured overview, key takeaways, chapter breakdown, pro tips, CTA, and SEO hashtags.
         """
-        clean_name = self._clean_filename_to_title(file_name)
         fallback_desc = f"""{title}
 
-Welcome to this video! In this session, we take an in-depth, hands-on look at {clean_name}. Whether you are just getting started or looking to elevate your skills, this video walks you through the essential concepts, workflow, and techniques you need to succeed.
+Welcome to this video! In this video, we explore everything you need to know about "{title}". Whether you are just getting started or looking to elevate your skills, this video walks you through the essential concepts, workflow, and techniques step by step.
 
-📌 WHAT YOU WILL LEARN IN THIS VIDEO:
-• Comprehensive overview and breakdown of {clean_name}
-• Step-by-step walkthrough of core mechanics and setup
-• Key techniques, best practices, and performance tips
-• How to troubleshoot common challenges and optimize your workflow
+📌 ABOUT THIS VIDEO:
+"{title}" covers key aspects and practical demonstrations to give you a complete, clear understanding. Follow along to discover best practices and actionable insights you can apply right away.
+
+🎯 WHAT YOU WILL LEARN IN THIS VIDEO:
+• Complete overview and core fundamentals of "{title}"
+• Step-by-step walkthrough and practical demonstration
+• Key techniques, tips, and performance recommendations
+• Common mistakes to avoid and how to optimize your workflow
+• Summary of essential takeaways and next steps
 
 ⏱️ CHAPTERS & TIMESTAMPS:
-0:00 - Introduction & Overview
-0:35 - Key Concepts & Initial Setup
-1:20 - Step-by-Step Walkthrough
-2:15 - Pro Tips & Optimization Best Practices
-2:50 - Summary & Next Steps
+0:00 - Introduction to {title}
+0:45 - Key Concepts & Overview
+2:00 - Step-by-Step Walkthrough
+4:15 - Pro Tips & Best Practices
+6:00 - Summary & Final Thoughts
 
-💡 VALUABLE TAKEAWAYS:
-Take your knowledge to the next level by following along with each step. Experiment with different settings and customize the process to fit your unique style and project goals!
+💡 VALUABLE PRO TIPS:
+Take your knowledge further by applying what you learn in each chapter. Experiment with different approaches and tailor them to your personal workflow and creative goals!
 
 🔔 ENJOYED THE VIDEO?
 If you found this video helpful, please give it a thumbs up 👍, share it with others, and hit the SUBSCRIBE button with the notification bell 🔔 turned on so you never miss another upload!
 
-Drop a comment below with your thoughts, questions, or suggestions for what you'd like to see next!
+Drop a comment below with your questions, feedback, or suggestions for upcoming topics!
 
-#Tutorial #Gaming #GameDev #Tech #Walkthrough #HowTo #VideoGuide #TipsAndTricks
+#VideoGuide #{re.sub(r'[^a-zA-Z0-9]', '', title)[:20]} #YouTube #Tutorial #TipsAndTricks
 """
         prompt = f"""You are a professional YouTube SEO and metadata expert.
-Generate a comprehensive, detailed, and engaging LONG-FORM YouTube video description for the following video:
+Generate a comprehensive, standard, and engaging YouTube video description based STRICTLY and DIRECTLY on the polished video title:
 
-Video Title: {title}
-Filename: {file_name}
+Polished Video Title: {title}
+Original Filename: {file_name}
 Duration: {video_meta.get('duration', 'unknown') if video_meta else 'unknown'} seconds
 Resolution: {video_meta.get('resolution', 'unknown') if video_meta else 'unknown'}
 
-The user specifically requested a LONG, thorough description (350-600 words). Include the following sections:
-1. HOOK & OVERVIEW (2-3 detailed, descriptive paragraphs explaining the video topic, context, and why it is interesting/valuable to watch).
-2. WHAT YOU WILL LEARN / KEY HIGHLIGHTS (4-6 detailed bullet points explaining specific takeaways).
-3. CHAPTERS / TIMESTAMPS (Provide a realistic chapter breakdown starting with 0:00 Introduction).
-4. PRO TIPS & BEST PRACTICES (2-3 actionable tips related to the video subject).
-5. CALL TO ACTION & ENGAGEMENT (Encourage viewers to Like, Subscribe, click the notification bell, and leave a comment).
-6. SEARCH-OPTIMIZED HASHTAGS (6 to 10 relevant hashtags at the very bottom, e.g. #Gaming #Tutorial #Tech).
+The user requested a standard, thorough description (350-600 words) centered around '{title}'. Include the following standard sections:
+1. HOOK & WELCOME (2 detailed paragraphs introducing "{title}", its context, and why viewers will find it valuable).
+2. ABOUT THIS VIDEO (A clear, standard breakdown of what this video on "{title}" covers).
+3. WHAT YOU WILL LEARN / KEY HIGHLIGHTS (4-6 detailed bullet points specifically derived from the themes in "{title}").
+4. CHAPTERS / TIMESTAMPS (Provide a realistic chapter breakdown starting with '0:00 - Introduction to {title}').
+5. PRO TIPS & BEST PRACTICES (2-3 actionable tips related specifically to "{title}").
+6. CALL TO ACTION & ENGAGEMENT (Encourage viewers to Like, Subscribe, click the notification bell, and leave a comment).
+7. SEARCH-OPTIMIZED HASHTAGS (6 to 10 relevant hashtags at the very bottom based on "{title}", e.g. #{re.sub(r'[^a-zA-Z0-9]', '', title)[:18]}).
 
-Return ONLY the complete description text. Do not wrap in markdown code blocks or add prefixes.
+Return ONLY the complete description text. Do not wrap in markdown code blocks or add prefixes like 'Description:'.
 """
         try:
             ai_response = self._call_ai(prompt, temperature=0.7)

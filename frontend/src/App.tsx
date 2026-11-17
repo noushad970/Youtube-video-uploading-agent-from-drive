@@ -238,7 +238,11 @@ export const App: React.FC = () => {
 
   const handleManualUploadSpecific = async (video: VideoItem) => {
     if (isGeminiKeyMissing()) {
-      showToast("error", "⚠️ Warning: Gemini API key required! You must give your Gemini API key first before uploading videos.");
+      showToast(
+        "error",
+        "⚠️ Warning: Gemini API key required! You cannot upload a video from Drive to YouTube directly without your Gemini API key first."
+      );
+      setActiveTab("dashboard");
       return;
     }
     setIsUploading(true);
@@ -386,6 +390,8 @@ export const App: React.FC = () => {
             remainingCount={videoStats.remaining}
             isLoading={isLoadingVideos}
             selectedFolderName={status?.selected_folder_name}
+            isApiKeyConfigured={!isGeminiKeyMissing()}
+            onConfigureKey={() => setActiveTab("dashboard")}
             onRefresh={fetchVideos}
             onSync={handleSyncFolder}
             onResetVideo={handleResetVideo}

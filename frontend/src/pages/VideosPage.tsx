@@ -21,6 +21,8 @@ interface VideosPageProps {
   remainingCount: number;
   isLoading: boolean;
   selectedFolderName?: string | null;
+  isApiKeyConfigured?: boolean;
+  onConfigureKey?: () => void;
   onRefresh: () => void;
   onSync: () => void;
   onResetVideo: (videoId: number) => void;
@@ -34,6 +36,8 @@ export const VideosPage: React.FC<VideosPageProps> = ({
   remainingCount,
   isLoading,
   selectedFolderName,
+  isApiKeyConfigured = true,
+  onConfigureKey,
   onRefresh,
   onSync,
   onResetVideo,
@@ -65,6 +69,36 @@ export const VideosPage: React.FC<VideosPageProps> = ({
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Warning alert if user tries to direct upload without Gemini API Key */}
+      {!isApiKeyConfigured && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/90 via-red-950/60 to-amber-950/90 border-2 border-amber-500/70 shadow-lg text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-400 animate-pulse" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-white flex items-center gap-2">
+                <span>⚠️ Direct Upload Disabled: Gemini API Key Required!</span>
+                <span className="text-[10px] px-2 py-0.5 rounded font-extrabold uppercase bg-red-500/20 text-red-300 border border-red-500/40">
+                  Required First
+                </span>
+              </div>
+              <p className="text-xs text-amber-200/90 mt-0.5">
+                You cannot upload a video from Drive to YouTube directly without an API key. Please provide your Gemini API key so AI can polish the title and build the standard description.
+              </p>
+            </div>
+          </div>
+          {onConfigureKey && (
+            <button
+              onClick={onConfigureKey}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 transition shadow active:scale-95"
+            >
+              Configure API Key →
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -206,10 +240,23 @@ export const VideosPage: React.FC<VideosPageProps> = ({
                         ) : (
                           <button
                             onClick={() => onManualUpload(video)}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30 transition"
+                            className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                              isApiKeyConfigured
+                                ? "bg-red-600/20 text-red-400 border border-red-500/30 hover:bg-red-600/30"
+                                : "bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25"
+                            }`}
+                            title={
+                              isApiKeyConfigured
+                                ? "Direct upload to YouTube"
+                                : "Gemini API Key required before uploading"
+                            }
                           >
-                            <UploadCloud className="h-3.5 w-3.5" />
-                            <span>Upload</span>
+                            {isApiKeyConfigured ? (
+                              <UploadCloud className="h-3.5 w-3.5" />
+                            ) : (
+                              <AlertTriangle className="h-3 w-3 text-amber-400" />
+                            )}
+                            <span>{isApiKeyConfigured ? "Upload" : "Key Required"}</span>
                           </button>
                         )}
                       </div>

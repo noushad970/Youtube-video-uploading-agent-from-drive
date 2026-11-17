@@ -32,6 +32,17 @@ def manual_upload_video(
 ):
     """Manually trigger upload of a specific video by ID or Drive File ID."""
     repo = Repository(db)
+    from app.services.ai_service import AIService
+    ai_service = AIService(db)
+    settings = repo.get_settings()
+
+    # CRITICAL CHECK: User cannot upload a video from Drive to YouTube directly without an API key!
+    if getattr(settings, "ai_provider", "gemini") == "gemini" and not ai_service.gemini_api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="Warning: Gemini API Key required! You cannot upload a video from Drive to YouTube directly without providing your Gemini API key first in Settings or Dashboard.",
+        )
+
     video = None
     if req.video_id:
         video = repo.get_video_by_id(req.video_id)
@@ -43,13 +54,10 @@ def manual_upload_video(
 
     try:
         from pathlib import Path
-        from app.services.ai_service import AIService
         from app.utils.video_utils import extract_video_metadata
 
         video_service = VideoService(db)
         upload_service = UploadService(db)
-        ai_service = AIService(db)
-        settings = repo.get_settings()
 
         # Download if not already local
         local_path = video.local_path
@@ -59,21 +67,14 @@ def manual_upload_video(
         video_file_path = Path(local_path)
         meta = extract_video_metadata(video_file_path)
 
-        # Title
-        title = req.title
-        if not title:
-            if settings.generate_title:
-                title = ai_service.generate_title(video.file_name, meta)
-            else:
-                title = ai_service._clean_filename_to_title(video.file_name)
+        # Title: Polished by AI from raw title or filename
+        raw_title = req.title or video.file_name
+        title = ai_service.polish_title(raw_title=raw_title, file_name=video.file_name, video_meta=meta)
 
-        # Long Description
+        # Description: Standard YouTube description based directly on the polished title
         description = req.description
-        if not description:
-            if settings.generate_description:
-                description = ai_service.generate_description(title, video.file_name, meta)
-            else:
-                description = f"{title}\n\nUploaded via YouTube AI Agent."
+        if not description or len(description.strip()) < 30:
+            description = ai_service.generate_description(title=title, file_name=video.file_name, video_meta=meta)
 
         # Tags (guaranteed 15-25 SEO tags)
         tags = req.tags
