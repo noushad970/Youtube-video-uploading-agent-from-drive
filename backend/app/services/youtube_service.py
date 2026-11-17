@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
 from googleapiclient.discovery import build
@@ -71,6 +72,7 @@ class YouTubeService:
 
         service = self._get_youtube_client()
 
+        today_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT00:00:00.000Z")
         body = {
             "snippet": {
                 "title": title[:100],
@@ -82,6 +84,9 @@ class YouTubeService:
                 "privacyStatus": privacy_status,
                 "selfDeclaredMadeForKids": False,
             },
+            "recordingDetails": {
+                "recordingDate": today_iso,
+            },
         }
 
         # Resumable upload chunk size: 10MB
@@ -92,9 +97,9 @@ class YouTubeService:
             chunksize=10 * 1024 * 1024,
         )
 
-        logger.info(f"Initiating YouTube resumable upload for '{title}' (Privacy: {privacy_status})...")
+        logger.info(f"Initiating YouTube resumable upload for '{title}' (Upload Date: {today_iso[:10]}, Privacy: {privacy_status})...")
         insert_request = service.videos().insert(
-            part="snippet,status",
+            part="snippet,status,recordingDetails",
             body=body,
             media_body=media,
         )

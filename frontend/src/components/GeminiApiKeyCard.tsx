@@ -491,6 +491,17 @@ export const GeminiApiKeyCard: React.FC<GeminiApiKeyCardProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Drive Video Title & Today's Upload Date Feature Notice */}
+          <div className="p-3.5 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs text-purple-200 flex items-start gap-3">
+            <Sparkles className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-bold text-white">💡 Drive Video Title & Today's Upload Date Notice:</span>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                All YouTube video details (AI-polished title, standard in-depth description, 18–25 SEO tags, and 16:9 thumbnail) are generated directly based on your <strong>Google Drive video title</strong>. The more detailed and descriptive your Drive title is, the more accurate and high-converting the generated title, description, and tags will be! The upload date is automatically set to <strong>today</strong>.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

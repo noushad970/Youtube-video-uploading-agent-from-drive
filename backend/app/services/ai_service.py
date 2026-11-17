@@ -2,6 +2,7 @@ import base64
 import json
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import httpx
@@ -180,7 +181,9 @@ class AIService:
         video_meta: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
-        Polish and optimize a raw title or filename into a professional, standard, high-CTR YouTube title.
+        Polish and optimize a raw title or Drive filename into a professional, standard, high-CTR YouTube title.
+        The Google Drive title is the core foundation: the more detailed the Drive title is,
+        the more accurate, targeted, and engaging the polished YouTube title will be.
         Cleans technical markers (e.g. 1080p, x264), version numbers (v1, final), extensions (.mp4),
         and applies YouTube Title Case.
         """
@@ -190,16 +193,19 @@ class AIService:
 
         fallback = self._clean_filename_to_title(candidate)
         prompt = f"""You are an elite YouTube title strategist and copywriter.
-Polish and optimize the following raw video title or filename into a professional, engaging, high-CTR YouTube video title:
+Polish and craft a high-CTR, compelling YouTube video title based directly on the Google Drive video title/filename.
 
-Raw Title / Subject: {candidate}
-Original Filename: {file_name}
+Original Google Drive Video Title: {file_name}
+Extracted Topic / Subject: {candidate}
 Duration: {video_meta.get('duration', 'unknown') if video_meta else 'unknown'} seconds
 Resolution: {video_meta.get('resolution', 'unknown') if video_meta else 'unknown'}
 
+CORE PRINCIPLE:
+The Drive video title is the primary foundation for this video. Analyze every specific detail, topic, tool, or context in the Drive title. The more detailed the Drive title is, the more accurate and targeted your polished YouTube title must be!
+
 Requirements:
 - Polish into natural, high-impact Title Case.
-- Completely remove messy technical artifacts, file extensions (.mp4, .mov, .mkv), timestamps, version numbers (v1, v2, final), and codec markers (1080p, 4k, 60fps).
+- Clean out messy technical markers, file extensions (.mp4, .mov, .mkv), timestamps, version numbers (v1, v2, final), and codec markers (1080p, 4k, 60fps).
 - Keep length between 55 and 85 characters (optimal for YouTube feed previews).
 - Do not make misleading claims or deceptive clickbait.
 - Return ONLY the final polished title text, with NO surrounding quotes, NO markdown formatting, and NO prefixes like 'Title:'.
@@ -233,10 +239,13 @@ Requirements:
         video_meta: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
-        Generate a comprehensive, standard YouTube video description directly based on the polished title.
-        Includes structured overview, key takeaways, chapter breakdown, pro tips, CTA, and SEO hashtags.
+        Generate a comprehensive, standard YouTube video description directly based on the Drive video title.
+        Includes structured overview, upload date (today), key takeaways, chapter breakdown, pro tips, CTA, and SEO hashtags.
+        The more detailed the Drive title is, the more accurate and rich the description will be.
         """
+        today_str = datetime.now().strftime("%B %d, %Y")
         fallback_desc = f"""{title}
+📅 Upload Date: {today_str}
 
 Welcome to this video! In this video, we explore everything you need to know about "{title}". Whether you are just getting started or looking to elevate your skills, this video walks you through the essential concepts, workflow, and techniques step by step.
 
@@ -268,21 +277,28 @@ Drop a comment below with your questions, feedback, or suggestions for upcoming 
 #VideoGuide #{re.sub(r'[^a-zA-Z0-9]', '', title)[:20]} #YouTube #Tutorial #TipsAndTricks
 """
         prompt = f"""You are a professional YouTube SEO and metadata expert.
-Generate a comprehensive, standard, and engaging YouTube video description based STRICTLY and DIRECTLY on the polished video title:
+Generate a comprehensive, standard, and engaging YouTube video description based STRICTLY and DIRECTLY on the Google Drive video title.
 
 Polished Video Title: {title}
-Original Filename: {file_name}
+Original Drive Video Title / Filename: {file_name}
+Upload Date: {today_str} (Today)
 Duration: {video_meta.get('duration', 'unknown') if video_meta else 'unknown'} seconds
 Resolution: {video_meta.get('resolution', 'unknown') if video_meta else 'unknown'}
 
-The user requested a standard, thorough description (350-600 words) centered around '{title}'. Include the following standard sections:
-1. HOOK & WELCOME (2 detailed paragraphs introducing "{title}", its context, and why viewers will find it valuable).
-2. ABOUT THIS VIDEO (A clear, standard breakdown of what this video on "{title}" covers).
-3. WHAT YOU WILL LEARN / KEY HIGHLIGHTS (4-6 detailed bullet points specifically derived from the themes in "{title}").
-4. CHAPTERS / TIMESTAMPS (Provide a realistic chapter breakdown starting with '0:00 - Introduction to {title}').
-5. PRO TIPS & BEST PRACTICES (2-3 actionable tips related specifically to "{title}").
-6. CALL TO ACTION & ENGAGEMENT (Encourage viewers to Like, Subscribe, click the notification bell, and leave a comment).
-7. SEARCH-OPTIMIZED HASHTAGS (6 to 10 relevant hashtags at the very bottom based on "{title}", e.g. #{re.sub(r'[^a-zA-Z0-9]', '', title)[:18]}).
+CORE PRINCIPLE:
+All details for this YouTube video must be generated directly based on the Google Drive title ('{file_name}'). The more detailed and specific the Drive title is, the more accurate, targeted, and comprehensive this description must be. Extract all subjects, tools, technologies, concepts, and steps mentioned in the Drive title!
+
+Include the following standard sections:
+1. TITLE & UPLOAD DATE BANNER:
+   "{title}"
+   "📅 Upload Date: {today_str}"
+2. HOOK & WELCOME: 2 detailed paragraphs introducing "{title}", its context, and why viewers will find it valuable based on the Drive title.
+3. 📌 ABOUT THIS VIDEO: A clear, standard breakdown of what this video on "{title}" covers.
+4. 🎯 WHAT YOU WILL LEARN / KEY HIGHLIGHTS: 4-6 detailed bullet points specifically derived from the themes and keywords in "{title}".
+5. ⏱️ CHAPTERS / TIMESTAMPS: Provide a realistic chapter breakdown starting with '0:00 - Introduction to {title}'.
+6. 💡 PRO TIPS & BEST PRACTICES: 2-3 actionable tips related specifically to "{title}".
+7. 🔔 CALL TO ACTION & ENGAGEMENT: Encourage viewers to Like, Subscribe, click the notification bell, and leave a comment.
+8. 🏷️ SEARCH-OPTIMIZED HASHTAGS: 6 to 10 relevant hashtags at the very bottom based on "{title}", e.g. #{re.sub(r'[^a-zA-Z0-9]', '', title)[:18]}.
 
 Return ONLY the complete description text. Do not wrap in markdown code blocks or add prefixes like 'Description:'.
 """
@@ -305,20 +321,25 @@ Return ONLY the complete description text. Do not wrap in markdown code blocks o
         file_name: str,
     ) -> List[str]:
         """
-        Generate 15 to 25 relevant, search-optimized YouTube tags.
+        Generate 15 to 25 relevant, search-optimized YouTube tags based directly on the Drive video title.
+        The more detailed the Drive title is, the more specific and accurate the resulting tags will be.
         Falls back to comprehensive algorithmic tag generation from title/filename so tags are NEVER empty.
         """
         fallback_tags = self._generate_fallback_tags(title, file_name)
         prompt = f"""You are a YouTube SEO specialist.
-Generate 15 to 25 highly relevant, high-traffic YouTube search tags for this video.
+Generate 18 to 25 highly relevant, high-traffic YouTube search tags based directly on the Google Drive video title.
 
-Video Title: {title}
-Filename: {file_name}
+Polished Video Title: {title}
+Original Drive Video Title / Filename: {file_name}
+
+CORE PRINCIPLE:
+All tags must be derived directly from the details in the Google Drive video title. The more detailed the Drive title is, the more specific, accurate, and high-converting the tags will be. Extract all core subjects, specific tools, techniques, target audience, and relevant long-tail search queries.
 
 Requirements:
 - Target what people actually search for on YouTube (long-tail keywords, phrases, synonyms).
+- Include 18 to 25 tags.
 - Return ONLY valid JSON format:
-{{"tags": ["tag 1", "tag 2", "tag 3", "tag 4", "tag 5", "tag 6", "tag 7", "tag 8", "tag 9", "tag 10", "tag 11", "tag 12", "tag 13", "tag 14", "tag 15"]}}
+{{"tags": ["tag 1", "tag 2", "tag 3", "tag 4", "tag 5", "tag 6", "tag 7", "tag 8", "tag 9", "tag 10", "tag 11", "tag 12", "tag 13", "tag 14", "tag 15", "tag 16", "tag 17", "tag 18"]}}
 - Do not include explanations or markdown code blocks around the JSON.
 """
         try:

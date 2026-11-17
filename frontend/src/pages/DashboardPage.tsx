@@ -109,11 +109,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </h1>
             <p className="mt-2 text-slate-300 text-sm sm:text-base leading-relaxed">
               Monitoring Google Drive folder <span className="font-semibold text-white">"{status?.selected_folder_name || "None Selected"}"</span>.
-              Randomly selects unuploaded videos, generates AI metadata & 16:9 thumbnails using{" "}
-              <span className="text-amber-400 font-medium">
-                {status?.ai_provider === "gemini" ? "Google Gemini AI (3.5 Flash-Lite & 16:9 Thumbnail)" : "Ollama AI"}
-              </span>
-              , and uploads to YouTube safely.
+              AI crafts polished titles, standard long descriptions, 18–25 SEO tags & 16:9 thumbnails based directly on your{" "}
+              <span className="text-purple-400 font-semibold">Drive video title</span>. The more detailed your Drive title is, the more accurate and viral your metadata will be! Videos are published with{" "}
+              <span className="text-emerald-400 font-semibold">today's upload date</span>.
             </p>
           </div>
 
